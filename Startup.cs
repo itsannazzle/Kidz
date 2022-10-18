@@ -16,7 +16,7 @@ namespace Kidz
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<DatabaseContex>(options =>
-                options.UseSqlServer("server=192.168.0.178;Database=Kidz;User Id=sa;Password=anna12345"),ServiceLifetime.Scoped);
+                options.UseSqlServer("server=192.168.0.171;Database=Kidz;User Id=sa;Password=anna12345"),ServiceLifetime.Scoped);
             services.AddSingleton((provider)=>
                 {
                     return Configuration;

@@ -16,9 +16,6 @@ public class DatabaseContex : DbContext
     public DbSet<RequestHistoryModel> entityRequestHistory { set; get; }
     public DbSet<ResponseHistoryModel> entityResponseHistory { set; get; }
 
-
-
-
      protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserModel>().ToTable(StringConstant.STRING_TABLE_USER);

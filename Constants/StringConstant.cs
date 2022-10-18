@@ -27,6 +27,7 @@ namespace Kidz.Constants
         public const string STRING_MESSAGE_CONTENT_USERDUPLICATE = "User already in database";
         public const string STRING_MESSAGE_CONTENT_USER_NOTFOUND = "User not found";
         public const string STRING_MESSAGE_CONTENT_TOKEN_NOTFOUND = "Token not found";
+        public const string STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL = "JSON Serialization Fail";
         //End - Response Message Content
 
 
