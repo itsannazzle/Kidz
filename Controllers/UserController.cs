@@ -20,82 +20,122 @@ public class UserController : BaseController
 
     [HttpPost]
     [Route("[controller]/selectUserLogin")]
-    public ResponseModel selectUserLogin([FromBody] RequestModel modelRequest)
+    public ResponseModel selectUserLogin([FromBody] String stringRequest)
     {
+        UserModel modelUser = new UserModel();
         ResponseModel modelResponse = new ResponseModel();
-        ResponseHistoryModel modelResponseHistory = new ResponseHistoryModel();
-        RequestHistoryModel modelRequestHistory = new RequestHistoryModel();
-        modelRequestHistory.setRequestHistoryModel(modelRequest,hostUrl+"/selectUserLogin");
-
-        _requestHistoryQuery.insertRequestHistory(modelRequestHistory);
-
-        string stringData = base64Decode(modelRequest.Data);
-
-        if(!(string.IsNullOrEmpty(stringData)))
+        HitHistoryModel modelHitHistory = new HitHistoryModel();
+        ResultHistoryModel modelResultHistory = new ResultHistoryModel();
+        RequestModel modelRequest = new RequestModel();
+        String stringRequestDecoded = "";
+        bool boolException = false;
+        try
         {
-            UserModel modelUser = JsonSerializer.Deserialize<UserModel>(stringData);
-            UserModel modelUserFromDb = _userQuery.selectUser(modelUser);
+            stringRequestDecoded = base64Decode(stringRequest);
+        }
+        catch (Exception exception)
+        {
+            modelResponse.MessageContent = exception.Message;
+            modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+            modelRequest.Data = exception.Message;
+            modelResultHistory.Data = exception.Message;
+            boolException = true;
+            modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/selectUserLogin");
+            _hitHistoryQuery.insertHistory(modelHitHistory);
+        }
 
-            //check user on db
-            if (modelUserFromDb != null)
+
+
+
+        if(!boolException)
+        {
+            if(!(string.IsNullOrEmpty(stringRequestDecoded)))
             {
-                //insert token to db
-                Random intRandom = new Random();
-                modelUserFromDb.Token = intRandom.Next(111,222).ToString();
-                modelResponse = _userQuery.insertUserToken(modelUserFromDb);
+                modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
+                modelUser = JsonSerializer.Deserialize<UserModel>(modelRequest.Data);
+                UserModel modelUserFromDb = _userQuery.selectUser(modelUser);
+
+                //check user on db
+                if (modelUserFromDb != null)
+                {
+                    //insert token to db
+                    Random intRandom = new Random();
+                    modelUserFromDb.Token = intRandom.Next(111,222).ToString();
+                    modelResponse = _userQuery.insertUserToken(modelUserFromDb);
+                }
+                else
+                {
+                    modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
+                    modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_USER_NOTFOUND;
+                    modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+                }
             }
             else
             {
-                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
-                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_USER_NOTFOUND;
+                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
+                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
                 modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
             }
         }
-        else
-        {
-            modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
-            modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
-            modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
-        }
 
-        modelResponseHistory.setResponseHistoryModel(modelResponse);
-        _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+        modelResultHistory.setResultHistoryModel(modelResponse);
+        _resultHistoryQuery.insertResultHistory(modelResultHistory);
 
         return modelResponse;
     }
 
     [HttpPost]
     [Route("[controller]/insertUser")]
-    public ResponseModel insertUser([FromBody] RequestModel modelRequest)
+    public ResponseModel insertUser([FromBody] String stringRequest)
     {
         UserModel modelUser = new UserModel();
         ResponseModel modelResponse = new ResponseModel();
+        RequestModel modelRequest = new RequestModel();
         HitHistoryModel modelHitHistory = new HitHistoryModel();
         ResultHistoryModel modelResultHistory = new ResultHistoryModel();
+        String stringRequestDecoded = "";
+        bool boolException = false;
 
         modelResponse.RequestedBy = modelResponse.RequestedBy;
         modelRequest.CreatedOn = DateTime.Now;
 
-        //url attribute = convert from route
-        modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/insertUser");
-        _hitHistoryQuery.insertHistory(modelHitHistory);
-
-        string stringData = base64Decode(modelRequest.Data);
-
-        if(!(string.IsNullOrEmpty(stringData)))
+        try
         {
-            modelUser = JsonSerializer.Deserialize<UserModel>(stringData);
-            //return response model
-            if(modelUser.validateUser())
-            {
-                modelResponse = _userQuery.insertUser(modelUser);
-            }
+            stringRequestDecoded = base64Decode(stringRequest);
         }
-        else
+        catch (Exception exception)
         {
-            modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
-            modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
+            modelResponse.MessageContent = exception.Message;
             modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+            modelRequest.Data = exception.Message;
+            boolException = true;
+            modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/insertUser");
+            _hitHistoryQuery.insertHistory(modelHitHistory);
+            modelResultHistory.Data = exception.Message;
+        }
+
+        if(!boolException)
+        {
+            if(!(string.IsNullOrEmpty(stringRequestDecoded)))
+            {
+                //url attribute = convert from route
+                modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
+                modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/insertUser");
+                _hitHistoryQuery.insertHistory(modelHitHistory);
+                modelUser = JsonSerializer.Deserialize<UserModel>(modelRequest.Data);
+                //return response model
+                if(modelUser.validateUser())
+                {
+                    modelResponse = _userQuery.insertUser(modelUser);
+                }
+            }
+                else
+            {
+                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
+                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
+                modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+            }
+
         }
 
         modelResultHistory.setResultHistoryModel(modelResponse);
