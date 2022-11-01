@@ -22,40 +22,57 @@ namespace Kidz.Controllers
 
         [HttpPost]
         [Route("[controller]/validateUserToken")]
-        public ResponseModel validateUserToken(RequestModel modelRequest)
+        public ResponseModel validateUserToken([FromBody] String stringRequest)
         {
-            ResponseModel modelResponse = new ResponseModel();
-            string stringRequestData = base64Decode(modelRequest.Data);
+            RequestModel _modelRequest = new RequestModel();
+            ResponseModel _modelResponse = new ResponseModel();
+            bool _boolException = false;
+            string _stringRequestDecoded = "";
 
-            if(!(string.IsNullOrEmpty(stringRequestData)))
+            try
             {
-                UserModel modelUserData = JsonSerializer.Deserialize<UserModel>(stringRequestData);
-                UserModel modelUser = _userQuery.selectUserByToken(modelUserData);
+                _stringRequestDecoded = base64Decode(stringRequest);
+            }
+            catch (Exception exception)
+            {
+                _boolException = true;
+                _modelResponse.MessageContent = exception.Message;
+                _modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+                _modelResponse.Data = exception.Message;
+            }
 
-                if( modelUser != null)
+            if(!_boolException)
+            {
+                 if(!(string.IsNullOrEmpty(_stringRequestDecoded)))
                 {
-                    modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
-                    modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_SUCCESS;
-                    modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_SUCCESS;
-                    modelResponse.Data = JsonSerializer.Serialize(modelUser);
+                    _modelRequest = JsonSerializer.Deserialize<RequestModel>(_stringRequestDecoded);
+                    UserModel modelUserData = JsonSerializer.Deserialize<UserModel>(_modelRequest.Data);
+                    UserModel modelUser = _userQuery.selectUserByToken(modelUserData);
+
+                    if( modelUser != null)
+                    {
+                        _modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
+                        _modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_SUCCESS;
+                        _modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_SUCCESS;
+                        _modelResponse.Data = JsonSerializer.Serialize(modelUser);
+                    }
+                    else
+                    {
+                        _modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
+                        _modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_FAIL;
+                        _modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+                        _modelResponse.Data = JsonSerializer.Serialize(modelUser);
+                    }
                 }
                 else
                 {
-                    modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
-                    modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_FAIL;
-                    modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
-                    modelResponse.Data = JsonSerializer.Serialize(modelUser);
+                    _modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
+                    _modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_DATAEMPTY;
+                    _modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
                 }
             }
-            else
-            {
-                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
-                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
-                modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
-            }
 
-
-            return modelResponse;
+            return _modelResponse;
         }
     }
 }

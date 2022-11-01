@@ -25,18 +25,19 @@ namespace Kidz.Controllers
 
         }
 
-         public static ResponseModel callInternalService(string stringURL, RequestModel modelRequest, string stringUserToken)
+         public static String callInternalService(string stringURL, string stringRequest, string stringUserToken)
         {
-            ResponseModel modelResponse = new ResponseModel();
+            string stringModelResponse= "";
+            string stringEncodedRequest;
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("Token", stringUserToken);
+
+            Uri uri = new Uri(stringURL);
 
             try
             {
-                HttpClient client = new HttpClient();
-                client.DefaultRequestHeaders.Add("Token", stringUserToken);
-
-                Uri uri = new Uri(stringURL);
-
-                using StringContent content = new StringContent(JsonSerializer.Serialize(modelRequest),UnicodeEncoding.UTF8,"application/json");
+                stringEncodedRequest = base64Encode(stringRequest);
+                StringContent content = new StringContent(JsonSerializer.Serialize(stringEncodedRequest),UnicodeEncoding.UTF8,"application/json");
 
                 HttpResponseMessage httpResponseMessage = client.PostAsync(uri, content).Result;
 
@@ -51,14 +52,14 @@ namespace Kidz.Controllers
                     PropertyNameCaseInsensitive = true,
                 };
 
-                modelResponse = JsonSerializer.Deserialize<ResponseModel>(stringResult, serializerOptions);
+                stringModelResponse = stringResult;
             }
             catch (Exception exception)
             {
                 Console.WriteLine("error message : "+exception.Message);
             }
 
-            return modelResponse;
+            return stringModelResponse;
         }
 
         public static string base64Decode(string base64EncodedData)

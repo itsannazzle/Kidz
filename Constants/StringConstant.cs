@@ -28,6 +28,9 @@ namespace Kidz.Constants
         public const string STRING_MESSAGE_CONTENT_USER_NOTFOUND = "User not found";
         public const string STRING_MESSAGE_CONTENT_TOKEN_NOTFOUND = "Token not found";
         public const string STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL = "JSON Serialization Fail";
+        public const string STRING_MESSAGE_CONTENT_DATAEMPTY = "Encryp data empty";
+        public const string STRING_MESSAGE_CONTENT_ECRYP_FAIL = "Encrypt Failed";
+        public const string STRING_MESSAGE_CONTENT_DECRYP_FAIL = "Decrypt Failed";
         //End - Response Message Content
 
 

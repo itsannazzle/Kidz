@@ -12,7 +12,7 @@ namespace Kidz.Models;
 [ApiController]
 public class UserController : BaseController
 {
-    string hostUrl = WebAddressConstant.STRING_SCHME_HTTP + WebAddressConstant.STRING_SCHME_LOCALHOST + WebAddressConstant.STRING_PORT_KIDZ;
+    string _hostUrl = WebAddressConstant.STRING_SCHME_HTTP + WebAddressConstant.STRING_SCHME_LOCALHOST + WebAddressConstant.STRING_PORT_KIDZ;
     public UserController(DatabaseContex databaseContex) : base(databaseContex)
     {
 
@@ -20,7 +20,7 @@ public class UserController : BaseController
 
     [HttpPost]
     [Route("[controller]/selectUserLogin")]
-    public ResponseModel selectUserLogin([FromBody] String stringRequest)
+    public String selectUserLogin([FromBody] String stringRequest)
     {
         UserModel modelUser = new UserModel();
         ResponseModel modelResponse = new ResponseModel();
@@ -29,6 +29,7 @@ public class UserController : BaseController
         RequestModel modelRequest = new RequestModel();
         String stringRequestDecoded = "";
         bool boolException = false;
+
         try
         {
             stringRequestDecoded = base64Decode(stringRequest);
@@ -37,15 +38,13 @@ public class UserController : BaseController
         {
             modelResponse.MessageContent = exception.Message;
             modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+            modelResponse.Data = exception.Message;
             modelRequest.Data = exception.Message;
             modelResultHistory.Data = exception.Message;
             boolException = true;
-            modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/selectUserLogin");
+            modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/selectUserLogin");
             _hitHistoryQuery.insertHistory(modelHitHistory);
         }
-
-
-
 
         if(!boolException)
         {
@@ -54,6 +53,8 @@ public class UserController : BaseController
                 modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
                 modelUser = JsonSerializer.Deserialize<UserModel>(modelRequest.Data);
                 UserModel modelUserFromDb = _userQuery.selectUser(modelUser);
+                modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/selectUserLogin");
+                _hitHistoryQuery.insertHistory(modelHitHistory);
 
                 //check user on db
                 if (modelUserFromDb != null)
@@ -81,12 +82,12 @@ public class UserController : BaseController
         modelResultHistory.setResultHistoryModel(modelResponse);
         _resultHistoryQuery.insertResultHistory(modelResultHistory);
 
-        return modelResponse;
+        return base64Encode(JsonSerializer.Serialize<ResponseModel>(modelResponse));
     }
 
     [HttpPost]
     [Route("[controller]/insertUser")]
-    public ResponseModel insertUser([FromBody] String stringRequest)
+    public String insertUser([FromBody] String stringRequest)
     {
         UserModel modelUser = new UserModel();
         ResponseModel modelResponse = new ResponseModel();
@@ -109,7 +110,7 @@ public class UserController : BaseController
             modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
             modelRequest.Data = exception.Message;
             boolException = true;
-            modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/insertUser");
+            modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/insertUser");
             _hitHistoryQuery.insertHistory(modelHitHistory);
             modelResultHistory.Data = exception.Message;
         }
@@ -120,7 +121,7 @@ public class UserController : BaseController
             {
                 //url attribute = convert from route
                 modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
-                modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/insertUser");
+                modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/insertUser");
                 _hitHistoryQuery.insertHistory(modelHitHistory);
                 modelUser = JsonSerializer.Deserialize<UserModel>(modelRequest.Data);
                 //return response model
@@ -141,7 +142,7 @@ public class UserController : BaseController
         modelResultHistory.setResultHistoryModel(modelResponse);
         _resultHistoryQuery.insertResultHistory(modelResultHistory);
 
-       return modelResponse;
+       return base64Encode(JsonSerializer.Serialize<ResponseModel>(modelResponse));
     }
 
     [HttpPost]
@@ -184,7 +185,7 @@ public class UserController : BaseController
 
     [HttpPost]
     [Route("[controller]/calculatePersegi")]
-    public ResponseModel calculatePersegi([FromBody] RequestModel modelRequest)
+    public String calculatePersegi([FromBody] String stringRequest)
     {
         UserModel modelUser = new UserModel();
         ResponseModel modelResponse = new ResponseModel();
@@ -192,59 +193,120 @@ public class UserController : BaseController
         ResultHistoryModel modelResultHistory = new ResultHistoryModel();
         RequestHistoryModel modelRequestHistory = new RequestHistoryModel();
         ResponseHistoryModel modelResponseHistory = new ResponseHistoryModel();
+        RequestModel modelRequest = new RequestModel();
+        bool boolException = false;
+        String stringRequestDecoded = "";
 
-        modelResponse.RequestedBy =modelResponse.RequestedBy;
+        modelResponse.RequestedBy = modelResponse.RequestedBy;
         modelRequest.CreatedOn = DateTime.Now;
 
-        //url attribute = convert from route
-        modelHitHistory.setHitHistoryFromRequest(modelRequest,hostUrl+"/calculatePersegi");
-        _hitHistoryQuery.insertHistory(modelHitHistory);
-
-        string stringData = base64Decode(modelRequest.Data);
-
-        if(!(string.IsNullOrEmpty(stringData)))
+        try
         {
-            modelUser = JsonSerializer.Deserialize<UserModel>(stringData);
+            stringRequestDecoded = base64Decode(stringRequest);
+        }
+        catch (Exception exception)
+        {
+            modelResponse.MessageContent = exception.Message;
+            modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_CONTENT_DECRYP_FAIL;
+            modelRequest.Data = exception.Message;
+            modelResultHistory.Data = exception.Message;
+            boolException = true;
+            //url attribute = convert from route
+            modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/calculatePersegi");
+            _hitHistoryQuery.insertHistory(modelHitHistory);
+        }
 
-            if(modelUser.Token != null)
+        if(!boolException)
+        {
+            if(!(string.IsNullOrEmpty(stringRequestDecoded)))
             {
-                if(modelUser.modelPersegi != null)
+                modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
+                modelUser = JsonSerializer.Deserialize<UserModel>(modelRequest.Data);
+                modelHitHistory.setHitHistoryFromRequest(modelRequest,_hostUrl+"/calculatePersegi");
+                _hitHistoryQuery.insertHistory(modelHitHistory);
+
+                if(modelUser.Token != null)
                 {
-                    string stringURL_CALCULATEPERSEGI = WebAddressConstant.STRING_SCHME_HTTPS + WebAddressConstant.STRING_SCHME_LOCALHOST + WebAddressConstant.STRING_PORT_BANGUNRUANG + WebAddressConstant.STRING_BANGUNRUANG_CALCULATEPERSEGI;
+                    if(modelUser.modelPersegi != null)
+                    {
+                        string stringURL_CALCULATEPERSEGI = WebAddressConstant.STRING_SCHME_HTTPS + WebAddressConstant.STRING_SCHME_LOCALHOST + WebAddressConstant.STRING_PORT_BANGUNRUANG + WebAddressConstant.STRING_BANGUNRUANG_CALCULATEPERSEGI;
 
-                    modelRequestHistory.setRequestHistoryModel(modelRequest, stringURL_CALCULATEPERSEGI);
-                    _requestHistoryQuery.insertRequestHistory(modelRequestHistory);
+                        modelRequestHistory.setRequestHistoryModel(modelRequest, stringURL_CALCULATEPERSEGI);
+                        _requestHistoryQuery.insertRequestHistory(modelRequestHistory);
 
-                    modelResponse = callInternalService(stringURL_CALCULATEPERSEGI, modelRequest, modelUser.Token);
+                        string stringModelResponse = callInternalService(stringURL_CALCULATEPERSEGI, stringRequestDecoded, modelUser.Token);
+                        bool boolExceptionInner = false;
 
-                    modelResponseHistory.setResponseHistoryModel(modelResponse);
-                    _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+                        try
+                        {
+                            stringModelResponse = base64Decode(stringModelResponse);
+                        }
+                        catch (Exception exception)
+                        {
+                            modelResponse.MessageContent = exception.Message;
+                            modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_CONTENT_DECRYP_FAIL;
+                            modelResponse.Data = exception.Message;
+
+                             modelResponseHistory.setResponseHistoryModel(modelResponse);
+                            _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+
+                            boolExceptionInner = true;
+                        }
+
+                        if(!boolExceptionInner)
+                        {
+                            if(!(string.IsNullOrEmpty(stringModelResponse)))
+                            {
+                                modelResponse = JsonSerializer.Deserialize<ResponseModel>(stringModelResponse);
+                                modelResponseHistory.setResponseHistoryModel(modelResponse);
+                                _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+                            }
+                            else
+                            {
+                                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
+                                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_FAIL;
+                                modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+
+                                modelResponseHistory.setResponseHistoryModel(modelResponse);
+                                _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
+                        modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_FAIL;
+                        modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+
+                        modelResponseHistory.setResponseHistoryModel(modelResponse);
+                        _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
+                    }
                 }
                 else
                 {
                     modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
-                    modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_FAIL;
+                    modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_ACCESS_DENY;
                     modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+
+                    modelResponseHistory.setResponseHistoryModel(modelResponse);
+                    _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
                 }
+
             }
             else
             {
-                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_FAIL;
-                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_ACCESS_DENY;
+                modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
+                modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_DATAEMPTY;
                 modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
+
+                modelResponseHistory.setResponseHistoryModel(modelResponse);
+                _responseHistoryQuery.insertResponseHistory(modelResponseHistory);
             }
-
-        }
-        else
-        {
-            modelResponse.ServiceResponseCode = ServiceResponseCodeConstant.STRING_RESPONSECODE_MODULE_SUCCESS;
-            modelResponse.MessageContent = StringConstant.STRING_MESSAGE_CONTENT_JSONSERIALIZE_FAIL;
-            modelResponse.MessageTitle = StringConstant.STRING_MESSAGE_TITLE_FAIL;
         }
 
-         modelResultHistory.setResultHistoryModel(modelResponse);
+        modelResultHistory.setResultHistoryModel(modelResponse);
         _resultHistoryQuery.insertResultHistory(modelResultHistory);
-        return modelResponse;
+        return base64Encode(JsonSerializer.Serialize<ResponseModel>(modelResponse));
 
     }
 }
