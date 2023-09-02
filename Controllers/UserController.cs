@@ -117,7 +117,7 @@ public class UserController : BaseController
 
         if(!boolException)
         {
-            if(!(string.IsNullOrEmpty(stringRequestDecoded)))
+            if(!string.IsNullOrEmpty(stringRequestDecoded))
             {
                 //url attribute = convert from route
                 modelRequest = JsonSerializer.Deserialize<RequestModel>(stringRequestDecoded);
